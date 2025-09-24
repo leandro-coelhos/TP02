@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++11 -I/usr/include/gtest -pthread -fprofile-arcs -ftest-coverage
-LDFLAGS = -lgtest_main -lgtest -pthread -fprofile-arcs -ftest-coverage
+CXXFLAGS = -Wall -Wextra -O0 -std=c++17 -I/usr/include/gtest -pthread -fprofile-arcs -ftest-coverage
+LDFLAGS  = -lgtest_main -lgtest -pthread -fprofile-arcs -ftest-coverage
 
 SRCS := $(wildcard *.cpp)
 OBJS := $(SRCS:.cpp=.o)
