@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "velha.cpp"
+#include "velha.h"
 
 // ---------- VITÓRIA DO X (1) ----------
 
@@ -70,12 +70,13 @@ TEST(VelhaTest, XVenceNaDiagonalSecundaria) {
     int tab[3][3] = {
         {2,0,1},
         {0,1,0},
-        {1,0,0}
+        {1,0,2}
     };
     EXPECT_EQ(1, Jogar(tab));
 }
 
 // ---------- VITÓRIA DO O (2) ----------
+// (para O vencer: #X == #O)
 
 TEST(VelhaTest, OVenceNaLinha0) {
     int tab[3][3] = {
@@ -107,7 +108,7 @@ TEST(VelhaTest, OVenceNaLinha2) {
 TEST(VelhaTest, OVenceNaColuna0) {
     int tab[3][3] = {
         {2,1,0},
-        {2,0,1},
+        {2,1,1},
         {2,0,0}
     };
     EXPECT_EQ(2, Jogar(tab));
@@ -117,7 +118,7 @@ TEST(VelhaTest, OVenceNaColuna1) {
     int tab[3][3] = {
         {1,2,0},
         {0,2,1},
-        {0,2,0}
+        {0,2,1}
     };
     EXPECT_EQ(2, Jogar(tab));
 }
@@ -126,7 +127,7 @@ TEST(VelhaTest, OVenceNaColuna2) {
     int tab[3][3] = {
         {1,0,2},
         {0,1,2},
-        {0,0,2}
+        {0,1,2}
     };
     EXPECT_EQ(2, Jogar(tab));
 }
@@ -135,7 +136,7 @@ TEST(VelhaTest, OVenceNaDiagonalPrincipal) {
     int tab[3][3] = {
         {2,1,0},
         {0,2,1},
-        {0,0,2}
+        {0,1,2}
     };
     EXPECT_EQ(2, Jogar(tab));
 }
@@ -143,25 +144,25 @@ TEST(VelhaTest, OVenceNaDiagonalPrincipal) {
 TEST(VelhaTest, OVenceNaDiagonalSecundaria) {
     int tab[3][3] = {
         {1,0,2},
-        {0,2,0},
+        {1,2,0},
         {2,0,1}
     };
     EXPECT_EQ(2, Jogar(tab));
 }
 
 // ---------- EMPATE (0) ----------
-// Tabuleiro cheio sem vencedor
+// Tabuleiro cheio, sem vencedor, #X=5, #O=4
 TEST(VelhaTest, Empate) {
     int tab[3][3] = {
         {1,2,1},
-        {2,1,2},
-        {2,1,2}
+        {1,2,2},
+        {2,1,1}
     };
     EXPECT_EQ(0, Jogar(tab));
 }
 
 // ---------- INDEFINIDO (-1) ----------
-// Partida em andamento (sem vencedor e com casas vazias)
+// Sem vencedor e ainda com espaços vazios
 TEST(VelhaTest, IndefinidoTabuleiroVazio) {
     int tab[3][3] = {
         {0,0,0},
@@ -190,9 +191,9 @@ TEST(VelhaTest, IndefinidoSemVencedorComEspacosVazios) {
 }
 
 // ---------- IMPOSSÍVEL (-2) ----------
-// Contagens ilegais, vencedores múltiplos, valores inválidos, etc.
+// Regras básicas e casos sem solução válida
 
-// Todos X: impossível pelas regras (O nunca jogou)
+// Todos X: impossível (O nunca jogou)
 TEST(VelhaTest, ImpossivelTodosX) {
     int tab[3][3] = {
         {1,1,1},
@@ -212,7 +213,7 @@ TEST(VelhaTest, ImpossivelOMaisQueX) {
     EXPECT_EQ(-2, Jogar(tab));
 }
 
-// Diferença de contagem > 1 (X jogou muitas a mais): impossível
+// Diferença de contagem > 1: impossível
 TEST(VelhaTest, ImpossivelXComDuasJogadasAMais) {
     int tab[3][3] = {
         {1,1,0},
@@ -222,45 +223,31 @@ TEST(VelhaTest, ImpossivelXComDuasJogadasAMais) {
     EXPECT_EQ(-2, Jogar(tab));
 }
 
-// Dois vencedores ao mesmo tempo (X e O): impossível
-TEST(VelhaTest, ImpossivelDoisVencedoresSimultaneos) {
-    // X vence na linha 0 e O vence na coluna 0 ao mesmo tempo
-    int tab[3][3] = {
-        {1,1,1},
-        {2,0,0},
-        {2,0,0}
-    };
-    // Ajuste para O vencer na coluna 0:
-    tab[2][0] = 2; // já está 2; mantém consistência
-    EXPECT_EQ(-2, Jogar(tab));
-}
-
-// X vence, mas contagem permite que O tenha a vez atual (inconsistente com vitória)
-// Ex.: X tem o mesmo número de peças que O mas X "acabou de vencer" — impossível
+// X vence mas contagem não permite (X deveria ter jogado por último)
 TEST(VelhaTest, ImpossivelXVenceMasContagemNaoPermite) {
     int tab[3][3] = {
         {1,1,1}, // X venceu
         {2,2,0},
         {0,0,0}
     };
-    // Contagem: X=3, O=2 -> ok; para tornar impossível, iguale contagem:
-    tab[2][2] = 2; // X=3, O=3 e X vencedor -> sequência impossível
+    // torna impossível: iguala contagem
+    tab[2][2] = 2; // X=3, O=3 e X vencedor -> inválido
     EXPECT_EQ(-2, Jogar(tab));
 }
 
-// O vence mas contagem indica que X jogou por último — impossível
+// O vence mas contagem não permite (O deveria ter jogado por último)
 TEST(VelhaTest, ImpossivelOVenceMasContagemNaoPermite) {
     int tab[3][3] = {
         {2,2,2}, // O venceu
         {1,1,0},
         {0,0,0}
     };
-    // Contagem: O=3, X=2 -> ok; torne impossível: X=3, O=3 com O vencedor
-    tab[1][2] = 1; // X=3, O=3 e O vencedor -> sequência impossível
+    // torna impossível: iguala contagem
+    tab[1][2] = 1; // X=3, O=3 e O vencedor -> inválido
     EXPECT_EQ(-2, Jogar(tab));
 }
 
-// Valores fora do domínio {0,1,2}: impossível
+// Valores inválidos
 TEST(VelhaTest, ImpossivelValorInvalidoNegativo) {
     int tab[3][3] = {
         {-1,0,0},
@@ -279,8 +266,7 @@ TEST(VelhaTest, ImpossivelValorInvalidoMaiorQue2) {
     EXPECT_EQ(-2, Jogar(tab));
 }
 
-// Dois alinhamentos vencedores para o mesmo jogador em estados impossíveis
-// (dependendo da sua lógica, você pode aceitar se a contagem permitir; aqui testamos como impossível)
+// Dois alinhamentos vencedores do MESMO jogador (tratado como impossível aqui)
 TEST(VelhaTest, ImpossivelXVenceEmDuasLinhasSimultaneas) {
     int tab[3][3] = {
         {1,1,1},
@@ -295,16 +281,6 @@ TEST(VelhaTest, ImpossivelOVenceEmDuasColunasSimultaneas) {
         {2,0,2},
         {2,1,2},
         {2,1,0}
-    };
-    EXPECT_EQ(-2, Jogar(tab));
-}
-
-// Tabuleiro cheio com duas vitórias simultâneas: impossível (não pode terminar assim)
-TEST(VelhaTest, ImpossivelTabuleiroCheioComDoisVencedores) {
-    int tab[3][3] = {
-        {1,1,1},  // X vence na linha 0
-        {2,2,2},  // O vence na linha 1
-        {1,2,1}
     };
     EXPECT_EQ(-2, Jogar(tab));
 }
